@@ -1,0 +1,1 @@
+This bucket contains a personal repository of errors and problems I faced and how I solved them

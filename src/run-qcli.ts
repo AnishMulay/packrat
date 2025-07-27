@@ -54,7 +54,7 @@ Instructions:
 Please execute these actions now.`;
 
   // Execute QCLI with the constructed prompt
-  const command = `q --no-interactive --trust-all --prompt "${prompt.replace(/"/g, '\\"')}"`;
+  const command = `q chat --no-interactive --trust-all-tools "${prompt.replace(/"/g, '\\"')}"`;
   
   console.log('🚀 Running QCLI to process notes...');
   const { stdout, stderr } = await execAsync(command);
