@@ -1,8 +1,10 @@
 import { FileSystemManager } from './fileUtils';
 import { loadConfig } from './config';
+import { createAIProvider } from './aiProvider';
+import { NotesProcessor } from './processor';
 
 async function main() {
-  console.log('PackRat Starting...');
+  console.log('🚀 Knowledge Management System Starting...');
   
   const config = loadConfig();
   const fsManager = new FileSystemManager();
@@ -14,11 +16,21 @@ async function main() {
   
   console.log('Directory structure initialized');
   
-  // Discover existing buckets
-  const buckets = await fsManager.discoverBuckets(config.bucketsDir);
-  console.log(`Found ${buckets.length} buckets:`, buckets.map(b => b.name));
+  // Initialize AI provider (use mock for testing)
+  const aiProvider = createAIProvider('mock'); // Change to 'amazon-q' when ready
   
-  console.log('System ready for processing');
+  // Create processor
+  const processor = new NotesProcessor(fsManager, aiProvider, config);
+  
+  // Process notes
+  const result = await processor.processNotes();
+  
+  console.log('\nProcessing Summary:');
+  console.log(`  Categorized into ${result.categorizedNotes.size} buckets`);
+  console.log(`  Uncategorized content: ${result.uncategorizedContent ? 'Yes' : 'No'}`);
+  console.log(`  Processed at: ${result.timestamp.toLocaleString()}`);
+  
+  console.log('\nProcessing complete!');
 }
 
 if (require.main === module) {
