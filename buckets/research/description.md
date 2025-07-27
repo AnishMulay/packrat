@@ -1,0 +1,1 @@
+This bucket contains my research project related thoughts, ideas and planning notes.
