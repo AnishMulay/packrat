@@ -33,25 +33,39 @@ export async function runQCLI(): Promise<void> {
   // Construct the prompt
   const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   
-  const prompt = `You are a knowledge management assistant. Process the following daily notes and categorize them into the appropriate buckets.
+  const prompt = `You are an intelligent knowledge management assistant.
 
-Available buckets:
+Your task is to read and interpret the following unstructured daily notes, and route and rewrite them into the appropriate knowledge buckets listed below.
+
+Each bucket has a purpose and a specific formatting structure, described in its respective \`description.md\`. You must follow the structural and formatting rules for each bucket strictly, using well-formatted Markdown.
+
+---
+
+🪣 **Available Buckets:**
+
 ${bucketDescriptions.join('\n')}
 
-Daily notes content:
+More buckets may be added in the future.
+
 ---
+
+📌 **Instructions:**
+
+1. Read the notes provided below.
+2. Split the content into logically coherent parts and assign each to the appropriate bucket.
+3. For each part:
+   - Rephrase, structure, and summarize the content as needed.
+   - Format the note using the Markdown structure specified in that bucket's \`description.md\`.
+4. Archive the original content in \`archive/${currentDate}.md\`
+5. Route unclassifiable or ambiguous content to \`review/unclassified-${currentDate}.md\`
+6. Clear \`notes.md\` after processing.
+
+---
+
+🗒 **Daily notes content:**
 ${notesContent}
----
 
-Instructions:
-1. Parse the contents of notes.md above
-2. Route content to the correct bucket/notes.md files based on the bucket descriptions
-3. Structure content according to each bucket's format requirements
-4. Archive the full raw contents to archive/${currentDate}.md
-5. Route any unclassifiable content to review/unclassified-${currentDate}.md
-6. Clear notes.md after processing
-
-Please execute these actions now.`;
+Begin processing now.`;
 
   // Execute QCLI with the constructed prompt
   const command = `q chat --no-interactive --trust-all-tools "${prompt.replace(/"/g, '\\"')}"`;
