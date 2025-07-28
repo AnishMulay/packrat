@@ -1,14 +1,24 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 
-const execAsync = promisify(exec);
+const execAsync = (command: string, args: string[]): Promise<{stdout: string, stderr: string}> => {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args);
+    let stdout = '', stderr = '';
+    child.stdout?.on('data', (data) => stdout += data);
+    child.stderr?.on('data', (data) => stderr += data);
+    child.on('close', (code) => {
+      if (code === 0) resolve({stdout, stderr});
+      else reject(new Error(`Command failed with code ${code}: ${stderr}`));
+    });
+  });
+};
 
 export async function runQCLI(): Promise<void> {
   try {
     // Check if QCLI is available
-    await execAsync('q --version');
+    await execAsync('q', ['--version']);
   } catch (error) {
     throw new Error('QCLI is not installed or not found in PATH. Please install it before running this script.');
   }
@@ -35,7 +45,7 @@ export async function runQCLI(): Promise<void> {
   
   const prompt = `You are an intelligent knowledge management assistant.
 
-Your task is to read and interpret the following unstructured daily notes, and route and rewrite them into the appropriate knowledge buckets listed below.
+Your task is to read and interpret the following unstructured daily notes, and route and rewrite them into the appropriate knowledge buckets.
 
 Each bucket has a purpose and a specific formatting structure, described in its respective \`description.md\`. You must follow the structural and formatting rules for each bucket strictly, using well-formatted Markdown.
 
@@ -45,8 +55,6 @@ Each bucket has a purpose and a specific formatting structure, described in its 
 
 ${bucketDescriptions.join('\n')}
 
-More buckets may be added in the future.
-
 ---
 
 📌 **Instructions:**
@@ -54,11 +62,13 @@ More buckets may be added in the future.
 1. Read the notes provided below.
 2. Split the content into logically coherent parts and assign each to the appropriate bucket.
 3. For each part:
-   - Rephrase, structure, and summarize the content as needed.
-   - Format the note using the Markdown structure specified in that bucket's \`description.md\`.
-4. Archive the original content in \`archive/${currentDate}.md\`
-5. Route unclassifiable or ambiguous content to \`review/unclassified-${currentDate}.md\`
-6. Clear \`notes.md\` after processing.
+   - **PRESERVE ALL ORIGINAL CONTENT** - do not summarize, condense, or remove any information.
+   - Only restructure and reformat the content according to the Markdown structure specified in that bucket's \`description.md\`.
+   - Maintain all original thoughts, reasoning, and detailed content.
+4. **IMPORTANT**: Write each processed note to the \`notes.md\` file inside the corresponding bucket folder (e.g., \`buckets/research/notes.md\`, \`buckets/personal-stackoverflow/notes.md\`).
+5. Do NOT create separate dated files. All notes go into the single \`notes.md\` file within each bucket.
+6. Archive the original content by saving it to \`archive/${currentDate}.md\`.
+7. Clear the main \`notes.md\` file after processing.
 
 ---
 
@@ -68,8 +78,6 @@ ${notesContent}
 Begin processing now.`;
 
   // Execute QCLI with the constructed prompt
-  const command = `q chat --no-interactive --trust-all-tools "${prompt.replace(/"/g, '\\"')}"`;
-  
   console.log('🚀 Running QCLI to process notes...');
   
   // Start loading animation
@@ -79,7 +87,7 @@ Begin processing now.`;
     process.stdout.write(`\r${frames[i++ % frames.length]} Processing...`);
   }, 100);
   
-  const { stdout, stderr } = await execAsync(command);
+  const { stdout, stderr } = await execAsync('q', ['chat', '--no-interactive', '--trust-all-tools', prompt]);
   
   // Stop loading animation
   clearInterval(loader);
