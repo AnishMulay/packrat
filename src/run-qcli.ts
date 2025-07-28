@@ -71,13 +71,24 @@ Begin processing now.`;
   const command = `q chat --no-interactive --trust-all-tools "${prompt.replace(/"/g, '\\"')}"`;
   
   console.log('🚀 Running QCLI to process notes...');
+  
+  // Start loading animation
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  let i = 0;
+  const loader = setInterval(() => {
+    process.stdout.write(`\r${frames[i++ % frames.length]} Processing...`);
+  }, 100);
+  
   const { stdout, stderr } = await execAsync(command);
+  
+  // Stop loading animation
+  clearInterval(loader);
+  process.stdout.write('\r✅ QCLI processing completed\n');
   
   if (stderr) {
     console.warn('QCLI warnings:', stderr);
   }
   
-  console.log('✅ QCLI processing completed');
   if (stdout) {
     console.log('Output:', stdout);
   }
