@@ -79,26 +79,29 @@ Begin processing now.`;
 
   // Execute QCLI with the constructed prompt
   console.log('🚀 Running QCLI to process notes...');
+  console.log('📋 Command: q chat --no-interactive --trust-all-tools [prompt]\n');
   
-  // Start loading animation
-  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-  let i = 0;
-  const loader = setInterval(() => {
-    process.stdout.write(`\r${frames[i++ % frames.length]} Processing...`);
-  }, 100);
+  const child = spawn('q', ['chat', '--no-interactive', '--trust-all-tools', prompt]);
   
-  const { stdout, stderr } = await execAsync('q', ['chat', '--no-interactive', '--trust-all-tools', prompt]);
+  // Stream output in real-time
+  child.stdout?.on('data', (data) => {
+    process.stdout.write(data);
+  });
   
-  // Stop loading animation
-  clearInterval(loader);
-  process.stdout.write('\r✅ QCLI processing completed\n');
+  child.stderr?.on('data', (data) => {
+    process.stderr.write(data);
+  });
   
-  if (stderr) {
-    console.warn('QCLI warnings:', stderr);
-  }
-  
-  if (stdout) {
-    console.log('Output:', stdout);
-  }
+  // Wait for completion
+  await new Promise((resolve, reject) => {
+    child.on('close', (code) => {
+      if (code === 0) {
+        console.log('\n✅ QCLI processing completed');
+        resolve(void 0);
+      } else {
+        reject(new Error(`Command failed with code ${code}`));
+      }
+    });
+  });
 }
 
