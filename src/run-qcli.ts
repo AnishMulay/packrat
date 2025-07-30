@@ -81,7 +81,7 @@ Begin processing now.`;
   console.log('🚀 Running QCLI to process notes...');
   console.log('📋 Command: q chat --no-interactive --trust-all-tools [prompt]\n');
   
-  const child = spawn('q', ['chat', '--no-interactive', '--trust-all-tools', prompt]);
+  const child = spawn('q', ['chat', '--no-interactive', '--trust-all-tools', '--model', 'claude-3.7-sonnet', prompt]);
   
   // Stream output in real-time
   child.stdout?.on('data', (data) => {
